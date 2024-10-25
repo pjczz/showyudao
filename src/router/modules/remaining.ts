@@ -589,15 +589,15 @@ const remainingRouter: AppRouteRecordRaw[] = [
     },
     children: [
       {
-        path: 'image/square',
-        component: () => import('@/views/ai/image/square/index.vue'),
+        path: 'chat',
+        component: () => import('@/views/ai/chat/index/index.vue'),
         name: 'AiImageSquare',
         meta: {
           title: '绘图作品',
           icon: 'ep:home-filled',
           noCache: false
         }
-      }
+      },
     ]
   },
   {

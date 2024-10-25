@@ -7,6 +7,8 @@ import { useRenderMenuItem } from './components/useRenderMenuItem'
 import { isUrl } from '@/utils/is'
 import { useDesign } from '@/hooks/web/useDesign'
 import { LayoutType } from '@/types/layout'
+import router from '@/router'
+import {menu} from './components/route'
 
 const { getPrefixCls } = useDesign()
 
@@ -40,11 +42,11 @@ export default defineComponent({
         return 'horizontal'
       }
     })
-
+    
     const routers = computed(() =>
-      unref(layout) === 'cutMenu' ? permissionStore.getMenuTabRouters : permissionStore.getRouters
+      unref(layout) === 'cutMenu' ? permissionStore.getMenuTabRouters : menu
     )
-
+    console.log(menu,'permissionStore.getRouters')
     const collapse = computed(() => appStore.getCollapse)
 
     const uniqueOpened = computed(() => appStore.getUniqueOpened)

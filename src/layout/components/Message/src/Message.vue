@@ -33,11 +33,11 @@ const goMyList = () => {
 // ========== 初始化 =========
 onMounted(() => {
   // 首次加载小红点
-  getUnreadCount()
+  // getUnreadCount()
   // 轮询刷新小红点
   setInterval(
     () => {
-      getUnreadCount()
+      // getUnreadCount()
     },
     1000 * 60 * 2
   )

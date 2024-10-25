@@ -1,14 +1,7 @@
 <template>
   <el-container class="ai-layout">
     <!-- 左侧：对话列表 -->
-    <ConversationList
-      :active-id="activeConversationId"
-      ref="conversationListRef"
-      @on-conversation-create="handleConversationCreateSuccess"
-      @on-conversation-click="handleConversationClick"
-      @on-conversation-clear="handleConversationClear"
-      @on-conversation-delete="handlerConversationDelete"
-    />
+
     <!-- 右侧：对话详情 -->
     <el-container class="detail-container">
       <el-header class="header">
@@ -51,7 +44,7 @@
             />
             <!-- 情况四：消息列表不为空 -->
             <MessageList
-              v-if="!activeMessageListLoading && messageList.length > 0"
+              v-if="messageList.length > 0"
               ref="messageRef"
               :conversation="activeConversation"
               :list="messageList"
@@ -128,8 +121,26 @@ const message = useMessage() // 消息弹窗
 
 // 聊天对话
 const conversationListRef = ref()
-const activeConversationId = ref<number | null>(null) // 选中的对话编号
-const activeConversation = ref<ChatConversationVO | null>(null) // 选中的 Conversation
+const activeConversationId = ref<number | null>(1) // 选中的对话编号
+const activeConversation = ref<ChatConversationVO | null>( {
+  id: 101,
+  userId: 1,
+  title: "日常聊天",
+  pinned: false,
+  roleId: 2001,
+  modelId: 1001,
+  model: "GPT-4",
+  temperature: 0.7,
+  maxTokens: 500,
+  maxContexts: 10,
+  createTime: new Date("2024-10-25T10:30:00"),
+  systemMessage: "你是一个热情的助手，乐于帮助用户解决问题。",
+  modelName: "OpenAI GPT-4",
+  roleAvatar: "https://example.com/avatars/role-avatar.png",
+  modelMaxTokens: "2048",
+  modelMaxContexts: "20"
+}
+) // 选中的 Conversation
 const conversationInProgress = ref(false) // 对话是否正在进行中。目前只有【发送】消息时，会更新为 true，避免切换对话、删除对话等操作
 
 // 消息列表
@@ -182,8 +193,9 @@ const handleConversationClick = async (conversation: ChatConversationVO) => {
   // 更新选中的对话 id
   activeConversationId.value = conversation.id
   activeConversation.value = conversation
+  
   // 刷新 message 列表
-  await getMessageList()
+  // await getMessageList()
   // 滚动底部
   scrollToBottom(true)
   // 清空输入框
@@ -291,7 +303,7 @@ const handleMessageDelete = () => {
     return
   }
   // 刷新 message 列表
-  getMessageList()
+  // getMessageList()
 }
 
 /** 处理 message 清空 */
@@ -428,45 +440,45 @@ const doSendMessageStream = async (userMessage: ChatMessageVO) => {
 
     // 2. 发送 event stream
     let isFirstChunk = true // 是否是第一个 chunk 消息段
-    await ChatMessageApi.sendChatMessageStream(
-      userMessage.conversationId,
-      userMessage.content,
-      conversationInAbortController.value,
-      enableContext.value,
-      async (res) => {
-        const { code, data, msg } = JSON.parse(res.data)
-        if (code !== 0) {
-          message.alert(`对话异常! ${msg}`)
-          return
-        }
+    // await ChatMessageApi.sendChatMessageStream(
+    //   userMessage.conversationId,
+    //   userMessage.content,
+    //   conversationInAbortController.value,
+    //   enableContext.value,
+    //   async (res) => {
+    //     const { code, data, msg } = JSON.parse(res.data)
+    //     if (code !== 0) {
+    //       message.alert(`对话异常! ${msg}`)
+    //       return
+    //     }
 
-        // 如果内容为空，就不处理。
-        if (data.receive.content === '') {
-          return
-        }
-        // 首次返回需要添加一个 message 到页面，后面的都是更新
-        if (isFirstChunk) {
-          isFirstChunk = false
-          // 弹出两个假数据
-          activeMessageList.value.pop()
-          activeMessageList.value.pop()
-          // 更新返回的数据
-          activeMessageList.value.push(data.send)
-          activeMessageList.value.push(data.receive)
-        }
-        // debugger
-        receiveMessageFullText.value = receiveMessageFullText.value + data.receive.content
-        // 滚动到最下面
-        await scrollToBottom()
-      },
-      (error) => {
-        message.alert(`对话异常! ${error}`)
-        stopStream()
-      },
-      () => {
-        stopStream()
-      }
-    )
+    //     // 如果内容为空，就不处理。
+    //     if (data.receive.content === '') {
+    //       return
+    //     }
+    //     // 首次返回需要添加一个 message 到页面，后面的都是更新
+    //     if (isFirstChunk) {
+    //       isFirstChunk = false
+    //       // 弹出两个假数据
+    //       activeMessageList.value.pop()
+    //       activeMessageList.value.pop()
+    //       // 更新返回的数据
+    //       activeMessageList.value.push(data.send)
+    //       activeMessageList.value.push(data.receive)
+    //     }
+    //     // debugger
+    //     receiveMessageFullText.value = receiveMessageFullText.value + data.receive.content
+    //     // 滚动到最下面
+    //     await scrollToBottom()
+    //   },
+    //   (error) => {
+    //     message.alert(`对话异常! ${error}`)
+    //     stopStream()
+    //   },
+    //   () => {
+    //     stopStream()
+    //   }
+    // )
   } catch {}
 }
 
@@ -565,19 +577,161 @@ onMounted(async () => {
   }
 
   // 获取列表数据
-  activeMessageListLoading.value = true
-  await getMessageList()
+  // await getMessageList()
+  const chatMessages: ChatMessageVO[] = [
+  {
+    id: 1,
+    conversationId: 1001,
+    type: "user",
+    userId: "U001",
+    roleId: "R001",
+    model: 1,
+    modelId: 1,
+    content: "你好，请问现在几点了？",
+    tokens: 5,
+    createTime: new Date("2024-10-25T10:00:00"),
+    roleAvatar: "",
+    userAvatar: ""
+  },
+  {
+    id: 2,
+    conversationId: 1001,
+    type: "answer",
+    userId: "U002",
+    roleId: "R002",
+    model: 1,
+    modelId: 1,
+    content: "现在是上午10点整。",
+    tokens: 4,
+    createTime: new Date("2024-10-25T10:00:05"),
+    roleAvatar: "",
+    userAvatar: ""
+  },
+  {
+    id: 3,
+    conversationId: 1002,
+    type: "user",
+    userId: "U001",
+    roleId: "R001",
+    model: 1,
+    modelId: 1,
+    content: "你能帮我推荐一些有趣的电影吗？",
+    tokens: 8,
+    createTime: new Date("2024-10-25T10:05:00"),
+    roleAvatar: "",
+    userAvatar: ""
+  },
+  {
+    id: 4,
+    conversationId: 1002,
+    type: "answer",
+    userId: "U002",
+    roleId: "R002",
+    model: 1,
+    modelId: 1,
+    content: "当然可以！我推荐《盗梦空间》、《疯狂动物城》和《复仇者联盟》。",
+    tokens: 10,
+    createTime: new Date("2024-10-25T10:05:15"),
+    roleAvatar: "",
+    userAvatar: ""
+  },
+  {
+    id: 5,
+    conversationId: 1003,
+    type: "user",
+    userId: "U001",
+    roleId: "R001",
+    model: 1,
+    modelId: 1,
+    content: "天气预报显示今天有雨吗？",
+    tokens: 6,
+    createTime: new Date("2024-10-25T10:10:00"),
+    roleAvatar: "",
+    userAvatar: ""
+  },
+  {
+    id: 6,
+    conversationId: 1003,
+    type: "user",
+    userId: "U002",
+    roleId: "R002",
+    model: 1,
+    modelId: 1,
+    content: "今天下午有小雨，请带伞出门。",
+    tokens: 7,
+    createTime: new Date("2024-10-25T10:10:10"),
+    roleAvatar: "",
+    userAvatar: ""
+  },
+  {
+    id: 7,
+    conversationId: 1004,
+    type: "user",
+    userId: "U001",
+    roleId: "R001",
+    model: 1,
+    modelId: 1,
+    content: "明天是星期几？",
+    tokens: 4,
+    createTime: new Date("2024-10-25T10:15:00"),
+    roleAvatar: "",
+    userAvatar: ""
+  },
+  {
+    id: 8,
+    conversationId: 1004,
+    type: "user",
+    userId: "U002",
+    roleId: "R002",
+    model: 1,
+    modelId: 1,
+    content: "明天是星期六。",
+    tokens: 3,
+    createTime: new Date("2024-10-25T10:15:05"),
+    roleAvatar: "",
+    userAvatar: ""
+  },
+  {
+    id: 9,
+    conversationId: 1005,
+    type: "user",
+    userId: "U001",
+    roleId: "R001",
+    model: 1,
+    modelId: 1,
+    content: "你知道如何制作意大利面吗？",
+    tokens: 7,
+    createTime: new Date("2024-10-25T10:20:00"),
+    roleAvatar: "",
+    userAvatar: ""
+  },
+  {
+    id: 10,
+    conversationId: 1005,
+    type: "answer",
+    userId: "U002",
+    roleId: "R002",
+    model: 1,
+    modelId: 1,
+    content: "当然知道。首先你需要准备意大利面、橄榄油、番茄酱和一些香料。然后煮沸水，加入面条，煮8-10分钟……",
+    tokens: 15,
+    createTime: new Date("2024-10-25T10:20:20"),
+    roleAvatar: "",
+    userAvatar: ""
+  }
+];
+activeMessageList.value = chatMessages;
 })
 </script>
 
 <style lang="scss" scoped>
 .ai-layout {
   position: absolute;
-  flex: 1;
   top: 0;
   left: 0;
-  height: 100%;
   width: 100%;
+  height: 100%;
+  flex: 1;
 }
 
 .conversation-container {
@@ -600,15 +754,15 @@ onMounted(async () => {
 
     .conversation {
       display: flex;
+      padding: 0 5px;
+      margin-top: 10px;
+      line-height: 30px;
+      cursor: pointer;
+      border-radius: 5px;
       flex-direction: row;
       justify-content: space-between;
       flex: 1;
-      padding: 0 5px;
-      margin-top: 10px;
-      cursor: pointer;
-      border-radius: 5px;
       align-items: center;
-      line-height: 30px;
 
       &.active {
         background-color: #e6e6e6;
@@ -625,18 +779,18 @@ onMounted(async () => {
       }
 
       .title {
-        padding: 5px 10px;
         max-width: 220px;
-        font-size: 14px;
+        padding: 5px 10px;
         overflow: hidden;
-        white-space: nowrap;
+        font-size: 14px;
         text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .avatar {
+        display: flex;
         width: 28px;
         height: 28px;
-        display: flex;
         flex-direction: row;
         justify-items: center;
       }
@@ -658,19 +812,19 @@ onMounted(async () => {
 
   // 角色仓库、清空未设置对话
   .tool-box {
-    line-height: 35px;
     display: flex;
+    line-height: 35px;
+    color: var(--el-text-color);
     justify-content: space-between;
     align-items: center;
-    color: var(--el-text-color);
 
     > div {
       display: flex;
-      align-items: center;
-      color: #606266;
       padding: 0;
       margin: 0;
+      color: #606266;
       cursor: pointer;
+      align-items: center;
 
       > span {
         margin-left: 5px;
@@ -681,7 +835,7 @@ onMounted(async () => {
 
 // 头部
 .detail-container {
-  background: #ffffff;
+  background: #fff;
 
   .header {
     display: flex;
@@ -712,50 +866,47 @@ onMounted(async () => {
 
 // main 容器
 .main-container {
-  margin: 0;
-  padding: 0;
   position: relative;
-  height: 100%;
   width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
 
   .message-container {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    overflow-y: hidden;
+    inset: 0;
     padding: 0;
     margin: 0;
+    overflow-y: hidden;
   }
 }
 
 // 底部
 .footer-container {
   display: flex;
-  flex-direction: column;
   height: auto;
-  margin: 0;
   padding: 0;
+  margin: 0;
+  flex-direction: column;
 
   .prompt-from {
     display: flex;
-    flex-direction: column;
     height: auto;
+    padding: 9px 10px;
+    margin: 10px 20px 20px;
     border: 1px solid #e3e3e3;
     border-radius: 10px;
-    margin: 10px 20px 20px 20px;
-    padding: 9px 10px;
+    flex-direction: column;
   }
 
   .prompt-input {
     height: 80px;
+    padding: 0 2px;
+    overflow: auto;
     //box-shadow: none;
     border: none;
     box-sizing: border-box;
     resize: none;
-    padding: 0 2px;
-    overflow: auto;
   }
 
   .prompt-input:focus {
@@ -764,9 +915,9 @@ onMounted(async () => {
 
   .prompt-btns {
     display: flex;
-    justify-content: space-between;
-    padding-bottom: 0;
     padding-top: 5px;
+    padding-bottom: 0;
+    justify-content: space-between;
   }
 }
 </style>
